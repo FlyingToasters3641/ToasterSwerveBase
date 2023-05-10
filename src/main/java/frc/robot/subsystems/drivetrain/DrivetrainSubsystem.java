@@ -22,7 +22,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     private CTRSwerveModule[] m_modules;
     private Pigeon2 m_pigeon2;
     private SwerveDriveKinematics m_kinematics;
-    private SwerveDriveOdometry m_odometry;
+   // private SwerveDriveOdometry m_odometry;
     private SwerveModulePosition[] m_modulePositions;
     private Translation2d[] m_moduleLocations;
     private OdometryThread m_odometryThread;
@@ -52,7 +52,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
         }
 
         public void run() {
-            /* Run as fast as possible, our signals will control the timing */
+            /* Run as fast as possible, signals will control the timing */
             while (true) {
                 /* Synchronously wait for all signals in drivetrain */
                 BaseStatusSignalValue.waitForAll(0.1, m_allSignals);
@@ -82,9 +82,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public DrivetrainSubsystem(
-            SwerveDriveTrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
+            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem m_poseEstimator, SwerveModuleConstants... modules) {
         ModuleCount = modules.length;
-
+        this.m_poseEstimator = m_poseEstimator;
         m_pigeon2 = new Pigeon2(driveTrainConstants.Pigeon2Id, driveTrainConstants.CANbusName);
 
         m_modules = new CTRSwerveModule[ModuleCount];
@@ -100,8 +100,8 @@ public class DrivetrainSubsystem extends SubsystemBase {
             iteration++;
         }
         m_kinematics = new SwerveDriveKinematics(m_moduleLocations);
-        m_odometry =
-                new SwerveDriveOdometry(m_kinematics, m_pigeon2.getRotation2d(), getSwervePositions());
+        //m_odometry =
+        //       new SwerveDriveOdometry(m_kinematics, m_pigeon2.getRotation2d(), getSwervePositions());
         m_field = new Field2d();
         //SmartDashboard.putData("Field", m_field);
 
