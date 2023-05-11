@@ -6,6 +6,7 @@
 package frc.robot;
 
 import com.ctre.phoenixpro.configs.Slot0Configs;
+import com.ctre.phoenixpro.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -26,8 +27,9 @@ import frc.robot.subsystems.drivetrain.SwerveModuleConstants;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
+    Pigeon2 m_pigeon2 = new Pigeon2(1, Constants.CanivoreName);
     SwerveDriveTrainConstants drivetrain =
-            new SwerveDriveTrainConstants().withPigeon2Id(1).withCANbusName("Canivore1").withTurnKp(5);
+            new SwerveDriveTrainConstants().withTurnKp(5);
 
     Slot0Configs steerGains = new Slot0Configs();
     Slot0Configs driveGains = new Slot0Configs();
@@ -41,43 +43,43 @@ public class RobotContainer {
 
     SwerveDriveConstantsCreator m_constantsCreator =
             new SwerveDriveConstantsCreator(
-                    10, // 10:1 ratio for the drive motor
-                    12.8, // 12.8:1 ratio for the steer motor
-                    3, // 3 inch radius for the wheels
+                    Constants.DriveMotorRatio, // 10:1 ratio for the drive motor
+                    Constants.SteerMotorRatio, // 12.8:1 ratio for the steer motor
+                    Constants.WheelRadius, // 3 inch radius for the wheels
                     17, // Only apply 17 stator amps to prevent slip
                     steerGains, // Use the specified steer gains
                     driveGains, // Use the specified drive gains
-                    false // CANcoder not reversed from the steer motor. For WCP Swerve X this should be true.
+                    true // CANcoder not reversed from the steer motor. For WCP Swerve X this should be true.
             );
     SwerveModuleConstants frontRight =
             m_constantsCreator.createModuleConstants(
-                    0, 1, 0, -0.538818, Units.inchesToMeters(22.0 / 2.0), Units.inchesToMeters(-22.0 / 2.0));
+                    Constants.FRONT_RIGHT_STEER, Constants.FRONT_RIGHT_DRIVE, Constants.FRONT_RIGHT_CANCODER, -0.538818, Constants.RobotWidth / 2, -Constants.RobotLength / 2);
 
     SwerveModuleConstants frontLeft =
             m_constantsCreator.createModuleConstants(
-                    2, 3, 1, -0.474609, Units.inchesToMeters(22.0 / 2.0), Units.inchesToMeters(22.0 / 2.0));
+                    Constants.FRONT_LEFT_STEER, Constants.FRONT_LEFT_DRIVE, Constants.FRONT_LEFT_CANCODER, -0.474609, Constants.RobotWidth / 2, Constants.RobotLength / 2);
     SwerveModuleConstants backRight =
             m_constantsCreator.createModuleConstants(
-                    4, 5, 2, -0.928467, Units.inchesToMeters(-22.0 / 2.0), Units.inchesToMeters(-22.0 / 2.0));
+                    Constants.BACK_RIGHT_STEER, Constants.BACK_RIGHT_DRIVE, Constants.BACK_RIGHT_CANCODER, -0.928467, -Constants.RobotWidth / 2, -Constants.RobotLength / 2);
     SwerveModuleConstants backLeft =
             m_constantsCreator.createModuleConstants(
-                    6, 7, 3, -0.756348, Units.inchesToMeters(-22.0 / 2.0), Units.inchesToMeters(22.0 / 2.0));
+                    Constants.BACK_LEFT_STEER, Constants.BACK_LEFT_DRIVE, Constants.BACK_LEFT_CANCODER, -0.756348, -Constants.RobotWidth / 2, Constants.RobotLength / 2);
 
 
-    //TODO: Link this into constants and configurations, this is a placeholder!
+
     PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(
             new SwerveDriveKinematics(
-                    new Translation2d(2, 3),
-                    new Translation2d(3, 4),
-                    new Translation2d(5, 3),
-                    new Translation2d(2, 3)
+                    new Translation2d(frontRight.LocationX, frontRight.LocationY),
+                    new Translation2d(frontLeft.LocationX, frontLeft.LocationY),
+                    new Translation2d(backRight.LocationX, backRight.LocationY),
+                    new Translation2d(backLeft.LocationX, backLeft.LocationY)
             ),
-            new Rotation2d(0),
+            new Rotation2d(m_pigeon2.getAngle()),
             new SwerveModulePosition[4],
             new Pose2d(0,0,new Rotation2d(0))
     );
 
-    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, frontRight, frontLeft, backRight, backLeft);
+    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, m_pigeon2, frontRight, frontLeft, backRight, backLeft);
 
     public RobotContainer() {
         // Configure the trigger bindings

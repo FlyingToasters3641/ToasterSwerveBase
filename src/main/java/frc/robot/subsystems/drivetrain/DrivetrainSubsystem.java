@@ -14,6 +14,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
 
 public class DrivetrainSubsystem extends SubsystemBase {
@@ -82,10 +83,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public DrivetrainSubsystem(
-            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem m_poseEstimator, SwerveModuleConstants... modules) {
+            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem m_poseEstimator, Pigeon2 m_pigeon2, SwerveModuleConstants... modules) {
         ModuleCount = modules.length;
         this.m_poseEstimator = m_poseEstimator;
-        m_pigeon2 = new Pigeon2(driveTrainConstants.Pigeon2Id, driveTrainConstants.CANbusName);
+        this.m_pigeon2 = m_pigeon2;
 
         m_modules = new CTRSwerveModule[ModuleCount];
         m_modulePositions = new SwerveModulePosition[ModuleCount];
@@ -93,7 +94,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
         int iteration = 0;
         for (SwerveModuleConstants module : modules) {
-            m_modules[iteration] = new CTRSwerveModule(module, driveTrainConstants.CANbusName);
+            m_modules[iteration] = new CTRSwerveModule(module, Constants.CanivoreName);
             m_moduleLocations[iteration] = new Translation2d(module.LocationX, module.LocationY);
             m_modulePositions[iteration] = m_modules[iteration].getPosition();
 
