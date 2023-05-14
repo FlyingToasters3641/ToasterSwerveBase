@@ -74,7 +74,11 @@ public class DrivetrainSubsystem extends SubsystemBase {
                         BaseStatusSignalValue.getLatencyCompensatedValue(
                                 m_pigeon2.getYaw(), m_pigeon2.getAngularVelocityZ());
 
-                m_poseEstimator.update(Rotation2d.fromDegrees(yawDegrees), m_modulePositions);
+                try {
+                    m_poseEstimator.update(Rotation2d.fromDegrees(yawDegrees), m_modulePositions);
+                } catch (Exception e) {
+                    System.out.println("Failed to add swerve states!");
+                }
 
                 SmartDashboard.putNumber("Successful Daqs", SuccessfulDaqs);
                 SmartDashboard.putNumber("Failed Daqs", FailedDaqs);
