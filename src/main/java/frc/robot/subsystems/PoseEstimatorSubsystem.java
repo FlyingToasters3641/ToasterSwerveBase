@@ -1,5 +1,6 @@
 package frc.robot.subsystems;
 
+import com.ctre.phoenixpro.BaseStatusSignalValue;
 import edu.wpi.first.math.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -11,6 +12,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import jdk.jshell.spi.ExecutionControl.*;
 
@@ -23,6 +25,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private final SwerveDriveKinematics m_kinematics;
     private final SwerveDriveOdometry m_odometry;
+    private OdometryThread m_odometryThread;
     private final Matrix<N3, N1> m_q = new Matrix<>(Nat.N3(), Nat.N1());
     private final int m_numModules;
     private Matrix<N3, N3> m_visionK = new Matrix<>(Nat.N3(), Nat.N3());
@@ -31,6 +34,60 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private final TimeInterpolatableBuffer<PoseEstimatorSubsystem.InterpolationRecord> m_poseBuffer =
             TimeInterpolatableBuffer.createBuffer(kBufferDuration);
+
+    private class OdometryThread extends Thread {
+        private BaseStatusSignalValue[] m_allSignals;
+        public int SuccessfulDaqs = 0;
+        public int FailedDaqs = 0;
+
+        public OdometryThread() {
+            super();
+            // 4 signals for each module + 2 for Pigeon2
+            m_allSignals = new BaseStatusSignalValue[(ModuleCount * 4) + 2];
+            for (int i = 0; i < ModuleCount; ++i) {
+                var signals = m_modules[i].getSignals();
+                m_allSignals[(i * 4) + 0] = signals[0];
+                m_allSignals[(i * 4) + 1] = signals[1];
+                m_allSignals[(i * 4) + 2] = signals[2];
+                m_allSignals[(i * 4) + 3] = signals[3];
+            }
+            m_allSignals[m_allSignals.length - 2] = m_pigeon2.getYaw();
+            m_allSignals[m_allSignals.length - 1] = m_pigeon2.getAngularVelocityZ();
+        }
+
+        public void run() {
+            /* Run as fast as possible, signals will control the timing */
+            while (true) {
+                /* Synchronously wait for all signals in drivetrain */
+                BaseStatusSignalValue.waitForAll(0.1, m_allSignals);
+
+                /* Get status of first element */
+                if (m_allSignals[0].getError().isOK()) {
+                    SuccessfulDaqs++;
+                } else {
+                    FailedDaqs++;
+                }
+
+                /* Now update odometry */
+                for (int i = 0; i < ModuleCount; ++i) {
+                    m_modulePositions[i] = m_modules[i].updateInputs();
+                }
+                // Assume Pigeon2 is flat-and-level so latency compensation can be performed
+                double yawDegrees =
+                        BaseStatusSignalValue.getLatencyCompensatedValue(
+                                m_pigeon2.getYaw(), m_pigeon2.getAngularVelocityZ());
+
+                try {
+                    m_poseEstimator.update(Rotation2d.fromDegrees(yawDegrees), m_modulePositions);
+                } catch (Exception e) {
+                    System.out.println("Failed to add swerve states!");
+                }
+
+                SmartDashboard.putNumber("Successful Daqs", SuccessfulDaqs);
+                SmartDashboard.putNumber("Failed Daqs", FailedDaqs);
+            }
+        }
+    }
 
     /**
      * Constructs a PoseEstimatorSubsystem with default standard deviations for the model and vision
@@ -90,6 +147,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         m_numModules = modulePositions.length;
 
         setVisionMeasurementStdDevs(visionMeasurementStdDevs);
+        m_odometryThread = new OdometryThread();
+        m_odometryThread.start();
     }
 
     /**
