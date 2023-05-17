@@ -52,17 +52,17 @@ public class RobotContainer {
             );
     SwerveModuleConstants frontRight =
             m_constantsCreator.createModuleConstants(
-                    Constants.FRONT_RIGHT_STEER, Constants.FRONT_RIGHT_DRIVE, Constants.FRONT_RIGHT_CANCODER, -0.538818, Constants.RobotWidth / 2, -Constants.RobotLength / 2);
+                    1, 2, 3, -0.538818, Constants.RobotWidth / 2, -Constants.RobotLength / 2);
 
     SwerveModuleConstants frontLeft =
             m_constantsCreator.createModuleConstants(
-                    Constants.FRONT_LEFT_STEER, Constants.FRONT_LEFT_DRIVE, Constants.FRONT_LEFT_CANCODER, -0.474609, Constants.RobotWidth / 2, Constants.RobotLength / 2);
+                    4, 5, 6, -0.474609, Constants.RobotWidth / 2, Constants.RobotLength / 2);
     SwerveModuleConstants backRight =
             m_constantsCreator.createModuleConstants(
-                    Constants.BACK_RIGHT_STEER, Constants.BACK_RIGHT_DRIVE, Constants.BACK_RIGHT_CANCODER, -0.928467, -Constants.RobotWidth / 2, -Constants.RobotLength / 2);
+                    7, 8, 7, -0.928467, -Constants.RobotWidth / 2, -Constants.RobotLength / 2);
     SwerveModuleConstants backLeft =
             m_constantsCreator.createModuleConstants(
-                    Constants.BACK_LEFT_STEER, Constants.BACK_LEFT_DRIVE, Constants.BACK_LEFT_CANCODER, -0.756348, -Constants.RobotWidth / 2, Constants.RobotLength / 2);
+                    9, 7, 7, -0.756348, -Constants.RobotWidth / 2, Constants.RobotLength / 2);
 
 
 
