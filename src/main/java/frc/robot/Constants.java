@@ -3,6 +3,7 @@ package frc.robot;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.util.Units;
+import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveModuleConstants;
 
 public final class Constants {
     public static final Mode currentMode = Mode.REAL;
@@ -37,5 +38,13 @@ public final class Constants {
     public static final int BACK_LEFT_STEER = 9;
     public static final int BACK_LEFT_DRIVE = 7;
     public static final int BACK_LEFT_CANCODER = 7;
+
+    public static class CTRSwerve {
+
+        public static SwerveModuleConstants getModuleConstants(int moduleIndex) {
+
+            return null;
+        }
+    }
 
 }

@@ -15,6 +15,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants;
 import frc.robot.subsystems.drivetrain.SwerveModuleIO;
 
 public class CTRSwerveModuleIO implements SwerveModuleIO {
@@ -34,7 +35,8 @@ public class CTRSwerveModuleIO implements SwerveModuleIO {
 
     private SwerveModulePosition m_internalState = new SwerveModulePosition();
 
-    public CTRSwerveModuleIO(SwerveModuleConstants constants, String canbusName) {
+    public CTRSwerveModuleIO(int moduleIndex, String canbusName) {
+        var constants = Constants.CTRSwerve.getModuleConstants(moduleIndex);
         m_driveMotor = new TalonFX(constants.DriveMotorId, canbusName);
         m_steerMotor = new TalonFX(constants.SteerMotorId, canbusName);
         m_cancoder = new CANcoder(constants.CANcoderId, canbusName);
@@ -85,7 +87,7 @@ public class CTRSwerveModuleIO implements SwerveModuleIO {
         m_driveRotationsPerMeter = rotationsPerWheelRotation / metersPerWheelRotation;
     }
     @Override
-    public void updateInputs(DriveIOInputs inputs) {
+    public void updateInputs(SwerveModuleIOInputs inputs) {
         /* Refresh all signals */
         m_drivePosition.refresh();
         m_driveVelocity.refresh();

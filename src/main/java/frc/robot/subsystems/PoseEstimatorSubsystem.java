@@ -14,6 +14,8 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.drivetrain.SwerveModuleIO;
+import frc.robot.subsystems.drivetrain.SwerveModuleIO.SwerveModuleIOInputs;
 import jdk.jshell.spi.ExecutionControl.*;
 
 import java.util.Arrays;
@@ -26,6 +28,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private final SwerveDriveKinematics m_kinematics;
     private final SwerveDriveOdometry m_odometry;
     private OdometryThread m_odometryThread;
+    private SwerveModuleIOInputs[] m_moduleInputs;
+    private SwerveModulePosition[] m_modulePositions;
+    private SwerveModuleIO[] m_modules;
     private final Matrix<N3, N1> m_q = new Matrix<>(Nat.N3(), Nat.N1());
     private final int m_numModules;
     private Matrix<N3, N3> m_visionK = new Matrix<>(Nat.N3(), Nat.N3());
@@ -70,7 +75,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
                 /* Now update odometry */
                 for (int i = 0; i < ModuleCount; ++i) {
-                    m_modulePositions[i] = m_modules[i].updateInputs();
+                    m_modules[i].updateInputs(m_moduleInputs[i]);
+                    m_modulePositions[i] = m_moduleInputs[i].swerveModuleState;
                 }
                 // Assume Pigeon2 is flat-and-level so latency compensation can be performed
                 double yawDegrees =
@@ -78,7 +84,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                                 m_pigeon2.getYaw(), m_pigeon2.getAngularVelocityZ());
 
                 try {
-                    m_poseEstimator.update(Rotation2d.fromDegrees(yawDegrees), m_modulePositions);
+                    update(Rotation2d.fromDegrees(yawDegrees), m_modulePositions);
                 } catch (Exception e) {
                     System.out.println("Failed to add swerve states!");
                 }
@@ -134,9 +140,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             SwerveDriveKinematics kinematics,
             Rotation2d gyroAngle,
             SwerveModulePosition[] modulePositions,
+            SwerveModuleIO[] modules,
             Pose2d initialPoseMeters,
             Matrix<N3, N1> stateStdDevs,
             Matrix<N3, N1> visionMeasurementStdDevs) {
+        m_modules = modules;
         m_kinematics = kinematics;
         m_odometry = new SwerveDriveOdometry(kinematics, gyroAngle, modulePositions, initialPoseMeters);
 
@@ -144,7 +152,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             m_q.set(i, 0, stateStdDevs.get(i, 0) * stateStdDevs.get(i, 0));
         }
 
-        m_numModules = modulePositions.length;
+        m_numModules = m_modules.length;
+        m_modulePositions = new SwerveModulePosition[m_modules.length];
+
 
         setVisionMeasurementStdDevs(visionMeasurementStdDevs);
         m_odometryThread = new OdometryThread();
