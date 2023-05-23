@@ -45,19 +45,6 @@ public class SwerveDriveConstantsCreator {
             double cancoderOffset,
             double locationX,
             double locationY) {
-        return new SwerveModuleConstants()
-                .withSteerMotorId(steerId)
-                .withDriveMotorId(driveId)
-                .withCANcoderId(cancoderId)
-                .withCANcoderOffset(cancoderOffset)
-                .withLocationX(locationX)
-                .withLocationY(locationY)
-                .withDriveMotorGearRatio(DriveMotorGearRatio)
-                .withSteerMotorGearRatio(SteerMotorGearRatio)
-                .withWheelRadius(WheelRadius)
-                .withSlipCurrent(SlipCurrent)
-                .withSteerMotorGains(SteerMotorGains)
-                .withDriveMotorGains(DriveMotorGains)
-                .withSteerMotorReversed(SteerMotorReversed);
+
     }
 }

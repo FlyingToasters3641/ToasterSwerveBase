@@ -1,8 +1,9 @@
 package frc.robot;
 
 import com.ctre.phoenixpro.configs.Slot0Configs;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
-import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveModuleConstants;
 
 import java.util.Map;
 
@@ -21,48 +22,79 @@ public final class Constants {
         REPLAY
     }
 
-
-    public static final double RobotWidth = Units.inchesToMeters(22.0);
-    public static final double RobotLength = RobotWidth;
-    public static final double SteerMotorRatio = 12.8; //12.8 : 1
-    public static final double DriveMotorRatio = 10.0; //10.0 : 1
-    public static final double WheelRadius = 3;
-
     public static class CTRSwerveConstants {
-        Slot0Configs steerGains = new Slot0Configs();
-        Slot0Configs driveGains = new Slot0Configs();
-
-        static Map driveIDs = Map.of(
-                "frontright", 2,
-                "frontleft", 5,
-                "backright", 8,
-                "backleft", 7
-        );
-
-        static Map steerIDs = Map.of(
-                "frontright", 1,
-                "frontleft", 4,
-                "backright", 7,
-                "backleft", 9
-        );
-
-        static Map cancoderIDs = Map.of(
-                "frontright", 3,
-                "frontleft", 6,
-                "backright", 7,
-                "backleft", 7
-        );
-
+        public static final double wheelRadius = 3;
+        public static final boolean CANCoderReversed = true;
+        public static final Slot0Configs steerGains = new Slot0Configs();
+        public static final Slot0Configs driveGains = new Slot0Configs();
         {
             steerGains.kP = 30;
             steerGains.kD = 0.2;
             driveGains.kP = 1;
         }
-        public static SwerveModuleConstants getModuleConstants(String moduleName) {
-            moduleName = moduleName.toLowerCase();
+        private static final double robotWidthMeters = Units.inchesToMeters(22.0);
+        private static final double robotLengthMeters = robotWidthMeters;
+        public static final double SteerMotorRatio = 12.8; //12.8 : 1
+        public static final double DriveMotorRatio = 10.0; //10.0 : 1
 
-            return null;
+        private static final String[] moduleNames = new String[] {
+                "frontright",
+                "frontleft",
+                "backright",
+                "backleft"
+        };
+        private static final Map<String, Integer> driveIDs = Map.of(
+                moduleNames[0], 2,
+                moduleNames[1], 5,
+                moduleNames[2], 8,
+                moduleNames[3], 7
+        );
+
+        public static int getDriveID(String moduleName) {
+            return driveIDs.get(moduleName.toLowerCase());
         }
+
+        private static final Map<String, Integer> steerIDs = Map.of(
+                moduleNames[0], 1,
+                moduleNames[1], 4,
+                moduleNames[2], 7,
+                moduleNames[3], 9
+        );
+
+        public static int getSteerID(String moduleName) {
+            return steerIDs.get(moduleName.toLowerCase());
+        }
+        private static final Map<String, Integer> cancoderIDs = Map.of(
+                moduleNames[0], 3,
+                moduleNames[1], 6,
+                moduleNames[2], 7,
+                moduleNames[3], 7
+        );
+
+        public static int getCANCoderID(String moduleName) {
+            return cancoderIDs.get(moduleName.toLowerCase());
+        }
+
+        private static final Map<String, Translation2d> modulePositions = Map.of(
+                moduleNames[0], new Translation2d(robotWidthMeters / 2, -robotLengthMeters / 2),
+                moduleNames[1], new Translation2d(robotWidthMeters / 2, robotLengthMeters / 2),
+                moduleNames[2], new Translation2d(-robotWidthMeters / 2, -robotLengthMeters / 2),
+                moduleNames[3], new Translation2d(-robotWidthMeters / 2, robotLengthMeters / 2)
+        );
+
+        public static SwerveDriveKinematics getSwerveKinematics() {
+            var positions = new Translation2d[modulePositions.size()];
+            {
+                int i = 0;
+                for (Translation2d position : modulePositions.values()) {
+                    positions[i] = position;
+                    i++;
+                }
+            }
+            return new SwerveDriveKinematics(positions);
+        }
+
+
     }
 
 }

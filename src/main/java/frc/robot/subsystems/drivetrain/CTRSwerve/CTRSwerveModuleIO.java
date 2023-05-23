@@ -36,7 +36,6 @@ public class CTRSwerveModuleIO implements SwerveModuleIO {
     private SwerveModulePosition m_internalState = new SwerveModulePosition();
 
     public CTRSwerveModuleIO(String moduleIndex, String canbusName) {
-        var constants = Constants.CTRSwerveConstants.getModuleConstants(moduleIndex);
         m_driveMotor = new TalonFX(constants.DriveMotorId, canbusName);
         m_steerMotor = new TalonFX(constants.SteerMotorId, canbusName);
         m_cancoder = new CANcoder(constants.CANcoderId, canbusName);

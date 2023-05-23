@@ -2,7 +2,7 @@ package frc.robot.subsystems.drivetrain.CTRSwerve;
 
 import com.ctre.phoenixpro.configs.Slot0Configs;
 
-public interface SwerveModuleConstants {
+public class SwerveModuleConstants {
     /** CAN ID of the drive motor */
     int DriveMotorId = 0;
     /** CAN ID of the steer motor */
@@ -38,5 +38,6 @@ public interface SwerveModuleConstants {
 
     /** True if the steering motor is reversed from the CANcoder */
     boolean SteerMotorReversed = false;
+
 
 }
