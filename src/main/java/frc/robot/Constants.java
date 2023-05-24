@@ -5,6 +5,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
+import java.util.Iterator;
 import java.util.Map;
 
 public final class Constants {
@@ -14,30 +15,42 @@ public final class Constants {
     public static String CanivoreName = "Canivore1";
 
     public static enum Mode {
-        /** Running on a real robot. */
+        /**
+         * Running on a real robot.
+         */
         REAL,
-        /** Running a physics simulator. */
+        /**
+         * Running a physics simulator.
+         */
         SIM,
-        /** Replaying from a log file. */
+        /**
+         * Replaying from a log file.
+         */
         REPLAY
     }
 
+    /**
+     * Constants for the SDS MK4i L3 with Falcons with Phoenix Pro
+     */
     public static class CTRSwerveConstants {
         public static final double wheelRadius = 3;
+        public static final int slipCurrent = 17;
         public static final boolean CANCoderReversed = true;
         public static final Slot0Configs steerGains = new Slot0Configs();
         public static final Slot0Configs driveGains = new Slot0Configs();
+
         {
             steerGains.kP = 30;
             steerGains.kD = 0.2;
             driveGains.kP = 1;
         }
+
         private static final double robotWidthMeters = Units.inchesToMeters(22.0);
         private static final double robotLengthMeters = robotWidthMeters;
         public static final double SteerMotorRatio = 12.8; //12.8 : 1
         public static final double DriveMotorRatio = 10.0; //10.0 : 1
 
-        private static final String[] moduleNames = new String[] {
+        public static final String[] moduleNames = new String[]{
                 "frontright",
                 "frontleft",
                 "backright",
@@ -64,6 +77,7 @@ public final class Constants {
         public static int getSteerID(String moduleName) {
             return steerIDs.get(moduleName.toLowerCase());
         }
+
         private static final Map<String, Integer> cancoderIDs = Map.of(
                 moduleNames[0], 3,
                 moduleNames[1], 6,
@@ -83,14 +97,8 @@ public final class Constants {
         );
 
         public static SwerveDriveKinematics getSwerveKinematics() {
-            var positions = new Translation2d[modulePositions.size()];
-            {
-                int i = 0;
-                for (Translation2d position : modulePositions.values()) {
-                    positions[i] = position;
-                    i++;
-                }
-            }
+            var positions = modulePositions.values()
+                    .toArray(new Translation2d[0]);
             return new SwerveDriveKinematics(positions);
         }
 

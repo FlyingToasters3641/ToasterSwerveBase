@@ -60,9 +60,12 @@ public interface SwerveModuleIO {
 
     public Translation2d modulePosition = new Translation2d(0,0);
 
-    /** Updates the set of loggable inputs. */
-    default void updateInputs(SwerveModuleIOInputs inputs) {
-    }
+    /**
+     * Updates the set of loggable inputs.
+     *
+     * @return
+     */
+    default void updateInputs(SwerveModuleIOInputs inputs) {}
 
     /** Run closed loop to the specified SwerveModuleState. */
     default void apply(SwerveModuleState state) {

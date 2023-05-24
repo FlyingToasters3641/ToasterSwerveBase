@@ -29,26 +29,7 @@ public class RobotContainer {
     SwerveDriveTrainConstants drivetrain =
             new SwerveDriveTrainConstants().withTurnKp(5);
 
-    Slot0Configs steerGains = new Slot0Configs();
-    Slot0Configs driveGains = new Slot0Configs();
 
-    {
-        steerGains.kP = 30;
-        steerGains.kD = 0.2;
-        driveGains.kP = 1;
-    }
-
-
-    SwerveDriveConstantsCreator m_constantsCreator =
-            new SwerveDriveConstantsCreator(
-                    Constants.CTRSwerveConstants.DriveMotorRatio, // 10:1 ratio for the drive motor
-                    Constants.CTRSwerveConstants.SteerMotorRatio, // 12.8:1 ratio for the steer motor
-                    Constants.CTRSwerveConstants.wheelRadius, // 3 inch radius for the wheels
-                    17, // Only apply 17 stator amps to prevent slip
-                    steerGains, // Use the specified steer gains
-                    driveGains, // Use the specified drive gains
-                    true // CANcoder not reversed from the steer motor. For WCP Swerve X this should be true.
-            );
 
 
     PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(
@@ -59,7 +40,7 @@ public class RobotContainer {
             new Pose2d(0,0,new Rotation2d(0))
     );
 
-    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, m_pigeon2, new CTRSwerveModuleIO);
+    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, m_pigeon2);
 
     public RobotContainer() {
         // Configure the trigger bindings
