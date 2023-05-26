@@ -13,7 +13,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
 import frc.robot.subsystems.drivetrain.CTRSwerve.CTRSwerveModuleIO;
 import frc.robot.subsystems.drivetrain.DrivetrainSubsystem;
-import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveDriveTrainConstants;
 import frc.robot.subsystems.drivetrain.SwerveModuleIO;
 
 /**
@@ -24,8 +23,6 @@ import frc.robot.subsystems.drivetrain.SwerveModuleIO;
  */
 public class RobotContainer {
     Pigeon2 m_pigeon2 = new Pigeon2(1, Constants.CANBusName);
-    SwerveDriveTrainConstants drivetrain =
-            new SwerveDriveTrainConstants().withTurnKp(5);
 
     private SwerveModuleIO[] m_modules;
 
