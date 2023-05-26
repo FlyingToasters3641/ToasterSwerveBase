@@ -25,7 +25,7 @@ import static frc.robot.subsystems.drivetrain.SwerveModuleIO.*;
 public class DrivetrainSubsystem extends SubsystemBase {
     private final SwerveModuleIO[] m_modules;
     private final SwerveModuleIO.SwerveModuleIOInputs[] m_moduleInputs;
-    private final Pigeon2 m_pigeon2;
+   // private final Pigeon2 m_pigeon2;
     private final SwerveDriveKinematics m_kinematics;
     // private SwerveDriveOdometry m_odometry;
     private SwerveModulePosition[] m_modulePositions;
@@ -35,9 +35,9 @@ public class DrivetrainSubsystem extends SubsystemBase {
     private PIDController m_turnPid;
 
     public DrivetrainSubsystem(
-            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem poseEstimator, Pigeon2 pigeon2, SwerveModuleIO... modules) {
+            PoseEstimatorSubsystem poseEstimator, SwerveModuleIO... modules) {
         m_poseEstimator = poseEstimator;
-        m_pigeon2 = pigeon2;
+        //m_pigeon2 = pigeon2;
         m_modules = modules;
         m_moduleInputs = new SwerveModuleIO.SwerveModuleIOInputs[m_modules.length];
         m_modulePositions = new SwerveModulePosition[m_modules.length];
@@ -54,7 +54,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
         m_field = new Field2d();
         //SmartDashboard.putData("Field", m_field);
 
-        m_turnPid = new PIDController(driveTrainConstants.TurnKp, 0, driveTrainConstants.TurnKd);
+        m_turnPid = new PIDController(Constants.TurnKp, 0, Constants.TurnKd);
         m_turnPid.enableContinuousInput(-Math.PI, Math.PI);
     }
 
@@ -66,7 +66,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public void driveFieldCentric(ChassisSpeeds speeds) {
-        var roboCentric = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, m_pigeon2.getRotation2d());
+        var roboCentric = ChassisSpeeds.fromFieldRelativeSpeeds(speeds, m_poseEstimator.getEstimatedPosition().getRotation());
         driveRobotCentric(roboCentric);
     }
 
@@ -92,6 +92,6 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     //TODO: Change this to work with pose estimator
     public void seedFieldRelative() {
-        m_pigeon2.setYaw(0);
+       // m_pigeon2.setYaw(0);
     }
 }

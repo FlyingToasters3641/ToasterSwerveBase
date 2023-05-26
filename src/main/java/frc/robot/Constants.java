@@ -12,6 +12,8 @@ public final class Constants {
 
     public static boolean DeterministicTimestamps = true;
     public static String CANBusName = "Canivore1";
+    public static final double TurnKd = 0;
+    public static final double TurnKp = 5;
 
     public static enum Mode {
         /**
@@ -103,6 +105,10 @@ public final class Constants {
 
         public static Translation2d[] getModulePositions() {
             return modulePositions.values().toArray(new Translation2d[0]);
+        }
+
+        public static String[] getModuleNames() {
+            return moduleNames;
         }
 
 

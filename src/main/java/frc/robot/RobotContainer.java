@@ -29,29 +29,27 @@ public class RobotContainer {
 
     private SwerveModuleIO[] m_modules;
 
-    {
-        int i = 0;
-        for (String moduleName : Constants.CTRSwerveConstants.moduleNames) {
-            m_modules[i] = new CTRSwerveModuleIO(moduleName, Constants.CANBusName);
-            i++;
-        }
-    }
-
-
 
     PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(
             Constants.CTRSwerveConstants.getSwerveKinematics(),
             new Rotation2d(m_pigeon2.getAngle()),
             new SwerveModulePosition[4],
-            ,
-            new Pose2d()
+            new Pose2d(),
+            m_pigeon2,
+            m_modules
     );
 
-    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, m_pigeon2);
+    DrivetrainSubsystem m_drive = new DrivetrainSubsystem(m_poseEstimator);
 
     public RobotContainer() {
         // Configure the trigger bindings
         configureBindings();
+
+        int i = 0;
+        for (String moduleName : Constants.CTRSwerveConstants.moduleNames) {
+            m_modules[i] = new CTRSwerveModuleIO(moduleName, Constants.CANBusName);
+            i++;
+        }
     }
 
 

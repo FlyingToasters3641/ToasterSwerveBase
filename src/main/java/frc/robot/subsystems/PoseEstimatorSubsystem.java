@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenixpro.BaseStatusSignalValue;
+import com.ctre.phoenixpro.hardware.Pigeon2;
 import edu.wpi.first.math.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -32,6 +33,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private AtomicBoolean odometryThreadLocked;
     private Timer timer = new Timer();
     private final SwerveDriveOdometry m_odometry;
+    private final Pigeon2 m_pigeon2;
     private OdometryThread m_odometryThread;
     private SwerveModuleIOInputs[] m_moduleInputs;
     private SwerveModulePosition[] m_modulePositions;
@@ -157,32 +159,26 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * @param gyroAngle                The current gyro angle.
      * @param modulePositions          The current distance and rotation measurements of the swerve modules.
      * @param initialPoseMeters        The starting pose estimate.
-     * @param stateStdDevs             Standard deviations of the pose estimate (x position in meters, y position
-     *                                 in meters, and heading in radians). Increase these numbers to trust your state estimate
-     *                                 less.
-     * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement (x position
-     *                                 in meters, y position in meters, and heading in radians). Increase these numbers to trust
-     *                                 the vision pose measurement less.
      */
     public PoseEstimatorSubsystem(
             SwerveDriveKinematics kinematics,
             Rotation2d gyroAngle,
             SwerveModulePosition[] modulePositions,
-            SwerveModuleIO[] modules,
             Pose2d initialPoseMeters,
-            Matrix<N3, N1> stateStdDevs,
-            Matrix<N3, N1> visionMeasurementStdDevs) {
+            Pigeon2 pigeon2,
+            SwerveModuleIO... modules) {
         m_modules = modules;
+        m_pigeon2 = pigeon2;
         m_kinematics = kinematics;
         m_odometry = new SwerveDriveOdometry(kinematics, gyroAngle, modulePositions, initialPoseMeters);
-
+        var stateStdDevs = VecBuilder.fill(0.005, 0.005, 0.0009);
+        var visionMeasurementStdDevs = VecBuilder.fill(0.05,0.05,5);
         for (int i = 0; i < 3; ++i) {
             m_q.set(i, 0, stateStdDevs.get(i, 0) * stateStdDevs.get(i, 0));
         }
 
         m_numModules = m_modules.length;
         m_modulePositions = new SwerveModulePosition[m_modules.length];
-
 
         setVisionMeasurementStdDevs(visionMeasurementStdDevs);
 
