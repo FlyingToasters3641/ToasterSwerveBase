@@ -64,6 +64,13 @@ public final class Constants {
                 moduleNames[3], 7
         );
 
+        private static final Map<String, Double> defaultCancoderOffsets = Map.of(
+                moduleNames[0], 0.0,
+                moduleNames[1], 0.0,
+                moduleNames[2], 0.0,
+                moduleNames[3], 0.0
+        );
+
         public static int getDriveID(String moduleName) {
             return driveIDs.get(moduleName.toLowerCase());
         }
@@ -111,7 +118,9 @@ public final class Constants {
             return moduleNames;
         }
 
-
+        public static double getDefaultCancoderOffset(String moduleName) {
+            return defaultCancoderOffsets.get(moduleName);
+        }
     }
 
 }

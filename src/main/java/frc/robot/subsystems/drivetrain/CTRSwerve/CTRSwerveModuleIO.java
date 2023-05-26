@@ -5,7 +5,6 @@ import com.ctre.phoenixpro.StatusSignalValue;
 import com.ctre.phoenixpro.configs.CANcoderConfiguration;
 import com.ctre.phoenixpro.configs.TalonFXConfiguration;
 import com.ctre.phoenixpro.configs.TorqueCurrentConfigs;
-import com.ctre.phoenixpro.controls.ControlInfo;
 import com.ctre.phoenixpro.controls.PositionVoltage;
 import com.ctre.phoenixpro.controls.VelocityTorqueCurrentFOC;
 import com.ctre.phoenixpro.hardware.CANcoder;
@@ -17,10 +16,9 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
 import frc.robot.Constants;
-import frc.robot.subsystems.drivetrain.CTRModuleFeatures;
 import frc.robot.subsystems.drivetrain.SwerveModuleIO;
 
-public class CTRSwerveModuleIO implements SwerveModuleIO, CTRModuleFeatures {
+public class CTRSwerveModuleIO implements SwerveModuleIO {
     private TalonFX m_driveMotor;
     private TalonFX m_steerMotor;
     private CANcoder m_cancoder;
@@ -37,7 +35,7 @@ public class CTRSwerveModuleIO implements SwerveModuleIO, CTRModuleFeatures {
 
     private SwerveModulePosition m_internalState = new SwerveModulePosition();
 
-    public CTRSwerveModuleIO(String moduleIndex, String canbusName) {
+    public CTRSwerveModuleIO(String moduleIndex, String canbusName, double CANcoderOffset) {
         m_driveMotor = new TalonFX(Constants.CTRSwerveConstants.getDriveID(moduleIndex), canbusName);
         m_steerMotor = new TalonFX(Constants.CTRSwerveConstants.getSteerID(moduleIndex), canbusName);
         m_cancoder = new CANcoder(Constants.CTRSwerveConstants.getCANCoderID(moduleIndex), canbusName);
@@ -69,7 +67,7 @@ public class CTRSwerveModuleIO implements SwerveModuleIO, CTRModuleFeatures {
 
         CANcoderConfiguration cancoderConfigs = new CANcoderConfiguration();
         //TODO, Implement reset store with networktables persistent storage
-        cancoderConfigs.MagnetSensor.MagnetOffset = constants.CANcoderOffset;
+        cancoderConfigs.MagnetSensor.MagnetOffset = CANcoderOffset;
         m_cancoder.getConfigurator().apply(cancoderConfigs);
 
         m_drivePosition = m_driveMotor.getPosition();
@@ -127,7 +125,6 @@ public class CTRSwerveModuleIO implements SwerveModuleIO, CTRModuleFeatures {
         double velocityToSet = optimized.speedMetersPerSecond * m_driveRotationsPerMeter;
         m_driveMotor.setControl(m_velocitySetter.withVelocity(velocityToSet));
     }
-    @Override
     public BaseStatusSignalValue[] getSignals() {
         return m_signals;
     }

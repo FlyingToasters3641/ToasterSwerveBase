@@ -47,7 +47,7 @@ public class RobotContainer {
 
         int i = 0;
         for (String moduleName : Constants.CTRSwerveConstants.moduleNames) {
-            m_modules[i] = new CTRSwerveModuleIO(moduleName, Constants.CANBusName);
+            m_modules[i] = new CTRSwerveModuleIO(moduleName, Constants.CANBusName, Constants.CTRSwerveConstants.getDefaultCancoderOffset(moduleName));
             i++;
         }
     }
