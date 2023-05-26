@@ -23,29 +23,24 @@ import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveModuleConstants;
 import static frc.robot.subsystems.drivetrain.SwerveModuleIO.*;
 
 public class DrivetrainSubsystem extends SubsystemBase {
-    private final int ModuleCount;
     private final SwerveModuleIO[] m_modules;
     private final SwerveModuleIO.SwerveModuleIOInputs[] m_moduleInputs;
     private final Pigeon2 m_pigeon2;
     private final SwerveDriveKinematics m_kinematics;
     // private SwerveDriveOdometry m_odometry;
     private SwerveModulePosition[] m_modulePositions;
-    private Translation2d[] m_moduleLocations;
     //  private OdometryThread m_odometryThread;
-    private PoseEstimatorSubsystem m_poseEstimator;
+    private final PoseEstimatorSubsystem m_poseEstimator;
     private Field2d m_field;
     private PIDController m_turnPid;
 
     public DrivetrainSubsystem(
-            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem m_poseEstimator, Pigeon2 m_pigeon2, SwerveModuleIO... modules) {
-        ModuleCount = modules.length;
-        this.m_poseEstimator = m_poseEstimator;
-        this.m_pigeon2 = m_pigeon2;
-
+            SwerveDriveTrainConstants driveTrainConstants, PoseEstimatorSubsystem poseEstimator, Pigeon2 pigeon2, SwerveModuleIO... modules) {
+        m_poseEstimator = poseEstimator;
+        m_pigeon2 = pigeon2;
         m_modules = modules;
-
-        m_moduleInputs = new SwerveModuleIO.SwerveModuleIOInputs[ModuleCount];
-        m_modulePositions = new SwerveModulePosition[ModuleCount];
+        m_moduleInputs = new SwerveModuleIO.SwerveModuleIOInputs[m_modules.length];
+        m_modulePositions = new SwerveModulePosition[m_modules.length];
 
         for (int i = 0; i < m_modules.length; i++) {
             // m_moduleLocations[iteration] = new Translation2d(module.LocationX, module.LocationY);
@@ -65,7 +60,7 @@ public class DrivetrainSubsystem extends SubsystemBase {
 
     public void driveRobotCentric(ChassisSpeeds speeds) {
         var swerveStates = m_kinematics.toSwerveModuleStates(speeds);
-        for (int i = 0; i < ModuleCount; ++i) {
+        for (int i = 0; i < m_modules.length; ++i) {
             m_modules[i].apply(swerveStates[i]);
         }
     }
@@ -87,9 +82,10 @@ public class DrivetrainSubsystem extends SubsystemBase {
     }
 
     public void driveStopMotion() {
-        /* Point every module toward (0,0) to make it close to a X configuration */
-        for (int i = 0; i < ModuleCount; ++i) {
-            var angle = m_moduleLocations[i].getAngle();
+        /* Point every module toward (0,0) to make it close to an X configuration */
+        var moduleLocations = Constants.CTRSwerveConstants.getModulePositions();
+        for (int i = 0; i < m_modules.length; ++i) {
+            var angle = moduleLocations[i].getAngle();
             m_modules[i].apply(new SwerveModuleState(0, angle));
         }
     }

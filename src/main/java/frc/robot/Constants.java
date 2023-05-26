@@ -5,14 +5,13 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
 
-import java.util.Iterator;
 import java.util.Map;
 
 public final class Constants {
     public static final Mode currentMode = Mode.REAL;
 
     public static boolean DeterministicTimestamps = true;
-    public static String CanivoreName = "Canivore1";
+    public static String CANBusName = "Canivore1";
 
     public static enum Mode {
         /**
@@ -100,6 +99,10 @@ public final class Constants {
             var positions = modulePositions.values()
                     .toArray(new Translation2d[0]);
             return new SwerveDriveKinematics(positions);
+        }
+
+        public static Translation2d[] getModulePositions() {
+            return modulePositions.values().toArray(new Translation2d[0]);
         }
 
 

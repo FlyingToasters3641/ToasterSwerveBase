@@ -5,18 +5,16 @@
 
 package frc.robot;
 
-import com.ctre.phoenixpro.configs.Slot0Configs;
 import com.ctre.phoenixpro.hardware.Pigeon2;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.PoseEstimatorSubsystem;
 import frc.robot.subsystems.drivetrain.CTRSwerve.CTRSwerveModuleIO;
 import frc.robot.subsystems.drivetrain.DrivetrainSubsystem;
-import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveDriveConstantsCreator;
 import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveDriveTrainConstants;
+import frc.robot.subsystems.drivetrain.SwerveModuleIO;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -25,19 +23,28 @@ import frc.robot.subsystems.drivetrain.CTRSwerve.SwerveDriveTrainConstants;
  * subsystems, commands, and trigger mappings) should be declared here.
  */
 public class RobotContainer {
-    Pigeon2 m_pigeon2 = new Pigeon2(1, Constants.CanivoreName);
+    Pigeon2 m_pigeon2 = new Pigeon2(1, Constants.CANBusName);
     SwerveDriveTrainConstants drivetrain =
             new SwerveDriveTrainConstants().withTurnKp(5);
 
+    private SwerveModuleIO[] m_modules;
+
+    {
+        int i = 0;
+        for (String moduleName : Constants.CTRSwerveConstants.moduleNames) {
+            m_modules[i] = new CTRSwerveModuleIO(moduleName, Constants.CANBusName);
+            i++;
+        }
+    }
 
 
 
     PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(
-            new SwerveDriveKinematics(
-            ),
+            Constants.CTRSwerveConstants.getSwerveKinematics(),
             new Rotation2d(m_pigeon2.getAngle()),
             new SwerveModulePosition[4],
-            new Pose2d(0,0,new Rotation2d(0))
+            ,
+            new Pose2d()
     );
 
     DrivetrainSubsystem m_drive = new DrivetrainSubsystem(drivetrain, m_poseEstimator, m_pigeon2);

@@ -12,8 +12,10 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.drivetrain.CTRSwerve.CTRSwerveModuleIO;
 import frc.robot.subsystems.drivetrain.SwerveModuleIO;
 import frc.robot.subsystems.drivetrain.SwerveModuleIO.SwerveModuleIOInputs;
 import jdk.jshell.spi.ExecutionControl.*;
@@ -22,10 +24,13 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private final SwerveDriveKinematics m_kinematics;
+    private AtomicBoolean odometryThreadLocked;
+    private Timer timer = new Timer();
     private final SwerveDriveOdometry m_odometry;
     private OdometryThread m_odometryThread;
     private SwerveModuleIOInputs[] m_moduleInputs;
@@ -44,37 +49,59 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         private BaseStatusSignalValue[] m_allSignals;
         public int SuccessfulDaqs = 0;
         public int FailedDaqs = 0;
+        boolean isCTRModules = true;
 
         public OdometryThread() {
             super();
-            // 4 signals for each module + 2 for Pigeon2
-            m_allSignals = new BaseStatusSignalValue[(ModuleCount * 4) + 2];
-            for (int i = 0; i < ModuleCount; ++i) {
-                var signals = m_modules[i].getSignals();
-                m_allSignals[(i * 4) + 0] = signals[0];
-                m_allSignals[(i * 4) + 1] = signals[1];
-                m_allSignals[(i * 4) + 2] = signals[2];
-                m_allSignals[(i * 4) + 3] = signals[3];
+            for (SwerveModuleIO module : m_modules) {
+                if (!(module instanceof CTRSwerveModuleIO)) {
+                    isCTRModules = false;
+                }
             }
-            m_allSignals[m_allSignals.length - 2] = m_pigeon2.getYaw();
-            m_allSignals[m_allSignals.length - 1] = m_pigeon2.getAngularVelocityZ();
+            if (isCTRModules) {
+                CTRSwerveModuleIO[] m_CTRModules = new CTRSwerveModuleIO[m_modules.length];
+                for (int i = 0; i < m_CTRModules.length; i++) {
+                    m_CTRModules[i] = (CTRSwerveModuleIO) m_modules[i];
+                }
+                // 4 signals for each module + 2 for Pigeon2
+                m_allSignals = new BaseStatusSignalValue[(m_CTRModules.length * 4) + 2];
+                for (int i = 0; i < m_CTRModules.length; ++i) {
+                    var signals = m_CTRModules[i].getSignals();
+                    m_allSignals[(i * 4) + 0] = signals[0];
+                    m_allSignals[(i * 4) + 1] = signals[1];
+                    m_allSignals[(i * 4) + 2] = signals[2];
+                    m_allSignals[(i * 4) + 3] = signals[3];
+                }
+                m_allSignals[m_allSignals.length - 2] = m_pigeon2.getYaw();
+                m_allSignals[m_allSignals.length - 1] = m_pigeon2.getAngularVelocityZ();
+            }
         }
 
         public void run() {
             /* Run as fast as possible, signals will control the timing */
             while (true) {
-                /* Synchronously wait for all signals in drivetrain */
-                BaseStatusSignalValue.waitForAll(0.1, m_allSignals);
+                if (isCTRModules) {
+                    /* Synchronously wait for all signals in drivetrain */
+                    BaseStatusSignalValue.waitForAll(0.1, m_allSignals);
 
-                /* Get status of first element */
-                if (m_allSignals[0].getError().isOK()) {
-                    SuccessfulDaqs++;
+                    /* Get status of first element */
+                    if (m_allSignals[0].getError().isOK()) {
+                        SuccessfulDaqs++;
+                    } else {
+                        FailedDaqs++;
+                    }
                 } else {
-                    FailedDaqs++;
+                    while(true) {
+                        if (!odometryThreadLocked.get()) {
+                            break;
+                        }
+                    }
                 }
 
+
+
                 /* Now update odometry */
-                for (int i = 0; i < ModuleCount; ++i) {
+                for (int i = 0; i < m_modules.length; ++i) {
                     m_modules[i].updateInputs(m_moduleInputs[i]);
                     m_modulePositions[i] = m_moduleInputs[i].swerveModuleState;
                 }
@@ -89,8 +116,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                     System.out.println("Failed to add swerve states!");
                 }
 
-                SmartDashboard.putNumber("Successful Daqs", SuccessfulDaqs);
-                SmartDashboard.putNumber("Failed Daqs", FailedDaqs);
+                odometryThreadLocked.set(true);
+               // SmartDashboard.putNumber("Successful Daqs", SuccessfulDaqs);
+               // SmartDashboard.putNumber("Failed Daqs", FailedDaqs);
             }
         }
     }
@@ -108,7 +136,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * @param modulePositions The current distance measurements and rotations of the swerve modules.
      * @param initialPoseMeters The starting pose estimate.
      */
-    public PoseEstimatorSubsystem(
+/*    public PoseEstimatorSubsystem(
             SwerveDriveKinematics kinematics,
             Rotation2d gyroAngle,
             SwerveModulePosition[] modulePositions,
@@ -120,21 +148,21 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                 initialPoseMeters,
                 VecBuilder.fill(0.1, 0.1, 0.1),
                 VecBuilder.fill(0.9, 0.9, 0.9));
-    }
+    }*/
 
     /**
      * Constructs a PoseEstimatorSubsystem.
      *
-     * @param kinematics A correctly-configured kinematics object for your drivetrain.
-     * @param gyroAngle The current gyro angle.
-     * @param modulePositions The current distance and rotation measurements of the swerve modules.
-     * @param initialPoseMeters The starting pose estimate.
-     * @param stateStdDevs Standard deviations of the pose estimate (x position in meters, y position
-     *     in meters, and heading in radians). Increase these numbers to trust your state estimate
-     *     less.
+     * @param kinematics               A correctly-configured kinematics object for your drivetrain.
+     * @param gyroAngle                The current gyro angle.
+     * @param modulePositions          The current distance and rotation measurements of the swerve modules.
+     * @param initialPoseMeters        The starting pose estimate.
+     * @param stateStdDevs             Standard deviations of the pose estimate (x position in meters, y position
+     *                                 in meters, and heading in radians). Increase these numbers to trust your state estimate
+     *                                 less.
      * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement (x position
-     *     in meters, y position in meters, and heading in radians). Increase these numbers to trust
-     *     the vision pose measurement less.
+     *                                 in meters, y position in meters, and heading in radians). Increase these numbers to trust
+     *                                 the vision pose measurement less.
      */
     public PoseEstimatorSubsystem(
             SwerveDriveKinematics kinematics,
@@ -157,8 +185,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
 
         setVisionMeasurementStdDevs(visionMeasurementStdDevs);
+
         m_odometryThread = new OdometryThread();
+        timer.start();
         m_odometryThread.start();
+
     }
 
     /**
@@ -167,8 +198,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * target increases.
      *
      * @param visionMeasurementStdDevs Standard deviations of the vision measurements. Increase these
-     *     numbers to trust global measurements from vision less. This matrix is in the form [x, y,
-     *     theta]ᵀ, with units in meters and radians.
+     *                                 numbers to trust global measurements from vision less. This matrix is in the form [x, y,
+     *                                 theta]ᵀ, with units in meters and radians.
      */
     public void setVisionMeasurementStdDevs(Matrix<N3, N1> visionMeasurementStdDevs) {
         var r = new double[3];
@@ -194,9 +225,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * <p>The gyroscope angle does not need to be reset in the user's robot code. The library
      * automatically takes care of offsetting the gyro angle.
      *
-     * @param gyroAngle The angle reported by the gyroscope.
+     * @param gyroAngle       The angle reported by the gyroscope.
      * @param modulePositions The current distance measurements and rotations of the swerve modules.
-     * @param poseMeters The position on the field that your robot is at.
+     * @param poseMeters      The position on the field that your robot is at.
      */
     public void resetPosition(
             Rotation2d gyroAngle, SwerveModulePosition[] modulePositions, Pose2d poseMeters) {
@@ -226,13 +257,13 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * current pose estimate.
      *
      * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
-     * @param timestampSeconds The timestamp of the vision measurement in seconds. Note that if you
-     *     don't use your own time source by calling {@link
-     *     PoseEstimatorSubsystem#updateWithTime(double,Rotation2d,SwerveModulePosition[])} then you
-     *     must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this timestamp is
-     *     the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}.) This means that
-     *     you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source
-     *     or sync the epochs.
+     * @param timestampSeconds      The timestamp of the vision measurement in seconds. Note that if you
+     *                              don't use your own time source by calling {@link
+     *                              PoseEstimatorSubsystem#updateWithTime(double, Rotation2d, SwerveModulePosition[])} then you
+     *                              must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this timestamp is
+     *                              the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}.) This means that
+     *                              you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source
+     *                              or sync the epochs.
      */
     public void addVisionMeasurement(Pose2d visionRobotPoseMeters, double timestampSeconds) {
         // Step 0: If this measurement is old enough to be outside the pose buffer's timespan, skip.
@@ -297,17 +328,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * to apply to future measurements until a subsequent call to {@link
      * PoseEstimatorSubsystem#setVisionMeasurementStdDevs(Matrix)} or this method.
      *
-     * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
-     * @param timestampSeconds The timestamp of the vision measurement in seconds. Note that if you
-     *     don't use your own time source by calling {@link
-     *     PoseEstimatorSubsystem#updateWithTime(double,Rotation2d,SwerveModulePosition[])}, then
-     *     you must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this
-     *     timestamp is the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}).
-     *     This means that you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as
-     *     your time source in this case.
+     * @param visionRobotPoseMeters    The pose of the robot as measured by the vision camera.
+     * @param timestampSeconds         The timestamp of the vision measurement in seconds. Note that if you
+     *                                 don't use your own time source by calling {@link
+     *                                 PoseEstimatorSubsystem#updateWithTime(double, Rotation2d, SwerveModulePosition[])}, then
+     *                                 you must use a timestamp with an epoch since FPGA startup (i.e., the epoch of this
+     *                                 timestamp is the same epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}).
+     *                                 This means that you should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as
+     *                                 your time source in this case.
      * @param visionMeasurementStdDevs Standard deviations of the vision pose measurement (x position
-     *     in meters, y position in meters, and heading in radians). Increase these numbers to trust
-     *     the vision pose measurement less.
+     *                                 in meters, y position in meters, and heading in radians). Increase these numbers to trust
+     *                                 the vision pose measurement less.
      */
     public void addVisionMeasurement(
             Pose2d visionRobotPoseMeters,
@@ -321,7 +352,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * Updates the pose estimator with wheel encoder and gyro information. This should be called every
      * loop.
      *
-     * @param gyroAngle The current gyro angle.
+     * @param gyroAngle       The current gyro angle.
      * @param modulePositions The current distance measurements and rotations of the swerve modules.
      * @return The estimated pose of the robot in meters.
      */
@@ -334,8 +365,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * loop.
      *
      * @param currentTimeSeconds Time at which this method was called, in seconds.
-     * @param gyroAngle The current gyroscope angle.
-     * @param modulePositions The current distance measurements and rotations of the swerve modules.
+     * @param gyroAngle          The current gyroscope angle.
+     * @param modulePositions    The current distance measurements and rotations of the swerve modules.
      * @return The estimated pose of the robot in meters.
      */
     public Pose2d updateWithTime(
@@ -379,8 +410,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         /**
          * Constructs an Interpolation Record with the specified parameters.
          *
-         * @param poseMeters The pose observed given the current sensor inputs and the previous pose.
-         * @param gyro The current gyro angle.
+         * @param poseMeters      The pose observed given the current sensor inputs and the previous pose.
+         * @param gyro            The current gyro angle.
          * @param modulePositions The distances and rotations measured at each wheel.
          */
         private InterpolationRecord(
@@ -395,7 +426,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
          * bound.
          *
          * @param endValue The upper bound, or end.
-         * @param t How far between the lower and upper bound we are. This should be bounded in [0, 1].
+         * @param t        How far between the lower and upper bound we are. This should be bounded in [0, 1].
          * @return The interpolated value.
          */
         @Override
@@ -459,10 +490,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     @Override
     public void periodic() {
+        if (m_modules.getClass().getComponentType() != CTRSwerveModuleIO.class) {
+            odometryThreadLocked.set(false);
+        }
 
     }
 
 
-    
-    
 }
